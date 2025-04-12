@@ -18,8 +18,8 @@ export class Post {
   @Prop({ required: true })
   category: string[];
 
-  @Prop({ type: CommentSchema, default: [] })
-  comment: Comment[];
+  @Prop({ type: CommentSchema, default: null })
+  comment: Comment[] | null;
 
   @Prop({ required: true })
   time_to_read: number;
