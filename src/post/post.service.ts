@@ -3,6 +3,9 @@ import { PostRepository } from './post.repository';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { PostMapper } from './post.mapper';
 import { isValidObjectId } from 'mongoose';
+import { UpdatePostDto } from './_utils/dtos/update-post.dto';
+import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
+import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 
 @Injectable()
 export class PostService {
@@ -52,5 +55,61 @@ export class PostService {
       );
     }
     return this.postRepository.deletePostById(id);
+  };
+
+  updatePostById = (
+    id: string,
+    author: string,
+    updatePostDto: UpdatePostDto,
+  ) => {
+    if (!isValidObjectId(id)) {
+      throw new HttpException(
+        'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.postRepository.updatePostById(id, author, updatePostDto);
+  };
+
+  createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
+    if (!isValidObjectId(idPost)) {
+      throw new HttpException(
+        'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (
+      (createCommentDto.comment.length || createCommentDto.author.length) < 1
+    ) {
+      throw new HttpException(
+        'At least 1 field is empty',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.postRepository.createComment(idPost, createCommentDto);
+  };
+
+  updateComment = (
+    idPost: string,
+    idComment: string,
+    updateCommentDto: UpdateCommentDto,
+  ) => {
+    if (!isValidObjectId(idPost)) {
+      throw new HttpException(
+        'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (updateCommentDto.comment.length < 1) {
+      throw new HttpException(
+        'At least 1 field is empty',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.postRepository.updateComment(
+      idPost,
+      idComment,
+      updateCommentDto,
+    );
   };
 }

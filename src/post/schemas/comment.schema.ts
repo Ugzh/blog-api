@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type CommentDocument = HydratedDocument<Comment>;
 
-@Schema()
+@Schema({ _id: true })
 export class Comment {
   @Prop({ required: true })
   author: string;

@@ -1,12 +1,10 @@
 import { IsArray, IsString } from 'class-validator';
 
-export class CreatePostDto {
+export class UpdatePostDto {
   @IsString()
   title: string;
   @IsString()
   text: string;
-  @IsString()
-  author: string;
   @IsArray()
   category: string[];
 }
