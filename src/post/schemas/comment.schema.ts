@@ -11,11 +11,10 @@ export class Comment {
   @Prop({ required: true })
   comment: string;
 
-  @Prop({ type: Date, required: true, default: Date.now() })
+  @Prop({ type: Date, required: true, default: Date.now })
   created_at: Date;
 
   @Prop({ type: Date, required: false, default: null })
   updated_at: Date | null;
 }
-
 export const CommentSchema = SchemaFactory.createForClass(Comment);

@@ -1,17 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
+import { PostMapper } from './post.mapper';
+import { isValidObjectId } from 'mongoose';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly postRepository: PostRepository) {}
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly postMapper: PostMapper,
+  ) {}
 
-  getAllPostByUser(author: string) {
-    return this.postRepository.getAllPostByUser(author);
-  }
+  getAllPostByUser = async (author: string) => {
+    if (!author)
+      throw new HttpException("Author's missing", HttpStatus.BAD_REQUEST);
+    const posts = await this.postRepository.getAllPostByUser(author);
+    return posts.map((post) => this.postMapper.fromDbToPost(post));
+  };
 
-  async createPost(createPostDto: CreatePostDto) {
-    await this.postRepository.createPost(createPostDto);
-    return;
-  }
+  createPost = async (createPostDto: CreatePostDto) => {
+    if (
+      (createPostDto.author.length &&
+        createPostDto.text.length &&
+        createPostDto.category.length &&
+        createPostDto.title.length) < 1
+    ) {
+      throw new HttpException(
+        'At least 1 field is empty',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const post = await this.postRepository.createPost(createPostDto);
+    return this.postMapper.fromDbToPost(post);
+  };
+
+  getPostById = (id: string) => {
+    if (!isValidObjectId(id)) {
+      throw new HttpException(
+        'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.postRepository.getPostById(id);
+  };
+
+  deletePostById = (id: string) => {
+    if (!isValidObjectId(id)) {
+      throw new HttpException(
+        'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.postRepository.deletePostById(id);
+  };
 }

@@ -21,7 +21,7 @@ export class User {
   @Prop({ required: false, default: null })
   profile_image_url: string | null;
 
-  @Prop({ type: Date, required: true, default: Date.now() })
+  @Prop({ type: Date, required: true, default: Date.now })
   created_at: Date;
 
   @Prop({ type: Date, required: false, default: null })
