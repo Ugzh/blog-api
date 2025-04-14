@@ -18,7 +18,7 @@ export class User {
   @Prop({ enum: UserRoleEnum, default: UserRoleEnum.READER })
   role: UserRoleEnum;
 
-  @Prop({ required: false, default: null })
+  @Prop({ type: String, required: false, default: null })
   profile_image_url: string | null;
 
   @Prop({ type: Date, required: true, default: Date.now })

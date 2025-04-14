@@ -37,14 +37,15 @@ export class PostService {
     return this.postMapper.fromDbToPost(post);
   };
 
-  getPostById = (id: string) => {
+  getPostById = async (id: string) => {
     if (!isValidObjectId(id)) {
       throw new HttpException(
         'Wrong id article format',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.getPostById(id);
+    const post = await this.postRepository.getPostById(id);
+    return this.postMapper.fromDbToPost(post);
   };
 
   deletePostById = (id: string) => {
@@ -94,9 +95,9 @@ export class PostService {
     idComment: string,
     updateCommentDto: UpdateCommentDto,
   ) => {
-    if (!isValidObjectId(idPost)) {
+    if (!isValidObjectId(idPost) || !isValidObjectId(idPost)) {
       throw new HttpException(
-        'Wrong id article format',
+        'Wrong id article or comment format',
         HttpStatus.BAD_REQUEST,
       );
     }
