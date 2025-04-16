@@ -7,6 +7,7 @@ import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
+import { Comment } from './schemas/comment.schema';
 
 @Injectable()
 export class PostRepository {
@@ -26,17 +27,24 @@ export class PostRepository {
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
+    @InjectModel(Comment.name)
+    private commentModel: Model<Comment>,
     private userRepository: UserRepository,
   ) {}
 
   getAllPosts = () => {
-    return this.postModel.find().exec();
+    return this.postModel
+      .find()
+      .populate('comments')
+      .populate('userId', 'username')
+      .exec();
   };
 
   getAllPostByUser = (author: string) => {
     return this.postModel
-      .find()
-      .where({ author: author })
+      .find({ author })
+      .populate('comments')
+      .populate('userId', 'username')
       .orFail(this.USER_NOT_FOUND_EXCEPTION)
       .exec();
   };
@@ -56,9 +64,10 @@ export class PostRepository {
       title: createPostDto.title,
       text: createPostDto.text,
       author: createPostDto.author,
-      category: createPostDto.category,
       userId: user._id,
-      timeToRead: createPostDto.text.length / 0.6,
+      category: createPostDto.category,
+      comments: [],
+      timeToRead: Math.ceil(createPostDto.text.length / 600),
     });
   };
 
@@ -80,9 +89,22 @@ export class PostRepository {
       .exec();
   };
 
-  createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
+  createComment = async (
+    idPost: string,
+    createCommentDto: CreateCommentDto,
+  ) => {
+    const user = await this.userRepository.findUserByUsername(
+      createCommentDto.author,
+    );
+
+    const comment = await this.commentModel.create({
+      author: createCommentDto.author,
+      comment: createCommentDto.comment,
+      userId: user._id,
+    });
+
     return this.postModel
-      .updateOne({ _id: idPost }, { $push: { comments: createCommentDto } })
+      .updateOne({ _id: idPost }, { $push: { comments: comment._id } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };

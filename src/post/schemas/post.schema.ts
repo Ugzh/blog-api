@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Comment, CommentSchema } from './comment.schema';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type PostDocument = HydratedDocument<Post>;
 
@@ -15,14 +14,14 @@ export class Post {
   @Prop({ required: true })
   author: string;
 
-  @Prop({ required: true })
-  userId: string;
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  userId: Types.ObjectId;
 
   @Prop({ required: true })
   category: string[];
 
-  @Prop({ type: [CommentSchema], default: [] })
-  comments: Comment[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Comment' }], default: [] })
+  comments: Types.ObjectId[];
 
   @Prop({ required: true })
   timeToRead: number;
