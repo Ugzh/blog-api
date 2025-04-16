@@ -19,7 +19,12 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Get()
-  getPost(@Query('author') author: string) {
+  getAllPosts() {
+    return this.postService.getAllPosts();
+  }
+
+  @Get()
+  getPostByAuthor(@Query('author') author: string) {
     return this.postService.getAllPostByUser(author);
   }
 

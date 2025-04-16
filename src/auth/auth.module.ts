@@ -4,19 +4,11 @@ import { AuthService } from './auth.service';
 import { UserModule } from '../user/user.module';
 import { JwtService } from '@nestjs/jwt';
 import { EncryptionService } from '../encryption/encryption.service';
+import { JwtStrategy } from './strategy/jwt.strategy';
 
 @Module({
-  imports: [
-    UserModule,
-    // PassportModule,
-    // JwtModule.registerAsync({
-    //   useFactory: () => ({
-    //     secret: "CeciDoitEtreUneVariableD'enrivronnement",
-    //     signOptions: { expiresIn: '1d' },
-    //   }),
-    // }),
-  ],
+  imports: [UserModule],
   controllers: [AuthController],
-  providers: [AuthService, JwtService, EncryptionService],
+  providers: [AuthService, JwtService, EncryptionService, JwtStrategy],
 })
 export class AuthModule {}

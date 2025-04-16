@@ -7,5 +7,5 @@ export class GetPostDto {
   author: string;
   category: string[];
   comments: Comment[];
-  time_to_read: number;
+  timeToRead: number;
 }

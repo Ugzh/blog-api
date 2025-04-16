@@ -4,7 +4,7 @@ import { UserRoleEnum } from '../_utils/user-role.enum';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true })
   email: string;
@@ -21,11 +21,9 @@ export class User {
   @Prop({ type: String, required: false, default: null })
   profile_image_url: string | null;
 
-  @Prop({ type: Date, required: true, default: Date.now })
-  created_at: Date;
+  createdAt: Date;
 
-  @Prop({ type: Date, required: false, default: null })
-  updated_at: Date | null;
+  updatedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

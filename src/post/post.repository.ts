@@ -6,6 +6,7 @@ import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class PostRepository {
@@ -25,7 +26,12 @@ export class PostRepository {
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
+    private userRepository: UserRepository,
   ) {}
+
+  getAllPosts = () => {
+    return this.postModel.find().exec();
+  };
 
   getAllPostByUser = (author: string) => {
     return this.postModel
@@ -42,20 +48,25 @@ export class PostRepository {
       .exec();
   };
 
-  createPost = (createPostDto: CreatePostDto) => {
+  createPost = async (createPostDto: CreatePostDto) => {
+    const user = await this.userRepository.findUserByUsername(
+      createPostDto.author,
+    );
     return this.postModel.create({
       title: createPostDto.title,
       text: createPostDto.text,
       author: createPostDto.author,
       category: createPostDto.category,
-      time_to_read: createPostDto.text.length / 0.6,
+      userId: user._id,
+      timeToRead: createPostDto.text.length / 0.6,
     });
   };
 
   deletePostById = (id: string) => {
     return this.postModel
       .deleteOne({ _id: id })
-      .orFail(this.POST_NOT_FOUND_EXCEPTION);
+      .orFail(this.POST_NOT_FOUND_EXCEPTION)
+      .exec();
   };
 
   updatePostById = async (
@@ -64,17 +75,16 @@ export class PostRepository {
     updatePostDto: UpdatePostDto,
   ) => {
     return this.postModel
-      .updateOne(
-        { _id: id },
-        { $set: { ...updatePostDto, updated_at: Date.now() } },
-      )
-      .orFail(this.POST_NOT_FOUND_EXCEPTION);
+      .updateOne({ _id: id }, { $set: { ...updatePostDto } })
+      .orFail(this.POST_NOT_FOUND_EXCEPTION)
+      .exec();
   };
 
   createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
     return this.postModel
       .updateOne({ _id: idPost }, { $push: { comments: createCommentDto } })
-      .orFail(this.POST_NOT_FOUND_EXCEPTION);
+      .orFail(this.POST_NOT_FOUND_EXCEPTION)
+      .exec();
   };
 
   updateComment = (
@@ -88,10 +98,10 @@ export class PostRepository {
         {
           $set: {
             'comments.$.comment': updateCommentDto.comment,
-            updated_at: Date.now(),
           },
         },
       )
-      .orFail(this.COMMENT_NOT_FOUND_EXCEPTION);
+      .orFail(this.COMMENT_NOT_FOUND_EXCEPTION)
+      .exec();
   };
 }

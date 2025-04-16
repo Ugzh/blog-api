@@ -30,6 +30,14 @@ export class UserRepository {
       .exec();
   };
 
+  findUserByUsername = (username: string) => {
+    return this.userModel
+      .findOne()
+      .where({ username })
+      .orFail(this.USER_NOT_FOUND)
+      .exec();
+  };
+
   createUser = async (createUserDto: CreateUserDto) => {
     const hashPassword = this.encryptionService.encrypt(createUserDto.password);
     const user = await this.userModel

@@ -2,9 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Comment, CommentSchema } from './comment.schema';
 import { HydratedDocument } from 'mongoose';
 
-export type postDocument = HydratedDocument<Post>;
+export type PostDocument = HydratedDocument<Post>;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Post {
   @Prop({ required: true })
   title: string;
@@ -16,18 +16,19 @@ export class Post {
   author: string;
 
   @Prop({ required: true })
+  userId: string;
+
+  @Prop({ required: true })
   category: string[];
 
   @Prop({ type: [CommentSchema], default: [] })
   comments: Comment[];
 
   @Prop({ required: true })
-  time_to_read: number;
+  timeToRead: number;
 
-  @Prop({ type: Date, required: true, default: Date.now })
-  created_at: Date;
+  createdAt: Date;
 
-  @Prop({ type: Date, required: false, default: null })
-  updated_at: Date | null;
+  updatedAt: Date;
 }
 export const PostSchema = SchemaFactory.createForClass(Post);

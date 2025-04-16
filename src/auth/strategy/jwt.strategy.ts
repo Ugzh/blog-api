@@ -5,7 +5,7 @@ import { UserRepository } from '../../user/user.repository';
 import JwtPayloadInterface from '../interfaces/jwt-payload.interface';
 
 @Injectable()
-export class jwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly userRepository: UserRepository) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

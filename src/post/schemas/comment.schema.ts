@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type CommentDocument = HydratedDocument<Comment>;
 
-@Schema({ _id: true })
+@Schema({ timestamps: true })
 export class Comment {
   @Prop({ required: true })
   author: string;
@@ -11,10 +11,8 @@ export class Comment {
   @Prop({ required: true })
   comment: string;
 
-  @Prop({ type: Date, required: true, default: Date.now })
-  created_at: Date;
+  createdAt: Date;
 
-  @Prop({ type: Date, required: false, default: null })
-  updated_at: Date | null;
+  updatedAt: Date;
 }
 export const CommentSchema = SchemaFactory.createForClass(Comment);

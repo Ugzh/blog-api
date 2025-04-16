@@ -14,6 +14,10 @@ export class PostService {
     private readonly postMapper: PostMapper,
   ) {}
 
+  getAllPosts = () => {
+    return this.postRepository.getAllPosts();
+  };
+
   getAllPostByUser = async (author: string) => {
     if (!author)
       throw new HttpException("Author's missing", HttpStatus.BAD_REQUEST);
@@ -66,6 +70,12 @@ export class PostService {
     if (!isValidObjectId(id)) {
       throw new HttpException(
         'Wrong id article format',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (!updatePostDto || Object.keys(updatePostDto).length === 0) {
+      throw new HttpException(
+        'Fill at least one field',
         HttpStatus.BAD_REQUEST,
       );
     }
