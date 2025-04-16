@@ -11,9 +11,6 @@ export class Comment {
   @Prop({ required: true })
   comment: string;
 
-  @Prop({ required: true })
-  userId: string;
-
   createdAt: Date;
 
   updatedAt: Date;

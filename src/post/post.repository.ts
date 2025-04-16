@@ -7,7 +7,6 @@ import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
-import { Comment } from './schemas/comment.schema';
 
 @Injectable()
 export class PostRepository {
@@ -27,8 +26,6 @@ export class PostRepository {
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
-    @InjectModel(Comment.name)
-    private commentModel: Model<Comment>,
     private userRepository: UserRepository,
   ) {}
 
@@ -44,7 +41,7 @@ export class PostRepository {
       .exec();
   };
 
-  getPostById = async (id: string) => {
+  getPostById = (id: string) => {
     return this.postModel
       .findById(id)
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
@@ -72,27 +69,20 @@ export class PostRepository {
       .exec();
   };
 
-  updatePostById = async (id: string, updatePostDto: UpdatePostDto) => {
+  updatePostById = async (
+    id: string,
+    author: string,
+    updatePostDto: UpdatePostDto,
+  ) => {
     return this.postModel
       .updateOne({ _id: id }, { $set: { ...updatePostDto } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };
 
-  createComment = async (
-    idPost: string,
-    createCommentDto: CreateCommentDto,
-  ) => {
-    const user = await this.userRepository.findUserByUsername(
-      createCommentDto.author,
-    );
-    const comment = await this.commentModel.create({
-      author: createCommentDto.author,
-      comment: createCommentDto.comment,
-      userId: user._id,
-    });
+  createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
     return this.postModel
-      .updateOne({ _id: idPost }, { $push: { comments: comment._id } })
+      .updateOne({ _id: idPost }, { $push: { comments: createCommentDto } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };

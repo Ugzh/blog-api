@@ -79,7 +79,7 @@ export class PostService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.updatePostById(id, updatePostDto);
+    return this.postRepository.updatePostById(id, author, updatePostDto);
   };
 
   createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
