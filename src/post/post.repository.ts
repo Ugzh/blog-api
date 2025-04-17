@@ -7,7 +7,7 @@ import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
-import { CommentDocument } from './schemas/comment.schema';
+import { CommentDocument } from '../comment/schemas/comment.schema';
 import { CommentRepository } from '../comment/comment.repository';
 
 @Injectable()
@@ -31,7 +31,7 @@ export class PostRepository {
   getAllPosts = () => {
     return this.postModel
       .find()
-      .populate('comments')
+      .populate('comments', 'comment')
       .populate('userId', 'username')
       .exec();
   };
@@ -39,7 +39,7 @@ export class PostRepository {
   getAllPostByUser = (author: string) => {
     return this.postModel
       .find({ author })
-      .populate('comments')
+      .populate('comments', 'comment')
       .populate('userId', 'username')
       .orFail(this.USER_NOT_FOUND_EXCEPTION)
       .exec();
@@ -68,11 +68,15 @@ export class PostRepository {
     });
   };
 
-  deletePostById = (id: string) => {
-    return this.postModel
-      .deleteOne({ _id: id })
+  deletePostById = async (post: PostDocument) => {
+    const postDelete = await this.postModel
+      .deleteOne({ _id: post._id })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
+    if (postDelete.deletedCount > 0) {
+      await this.commentRepository.deleteManyComments(post.comments);
+    }
+    return postDelete.deletedCount;
   };
 
   updatePostById = async (post: PostDocument, updatePostDto: UpdatePostDto) => {
@@ -108,16 +112,4 @@ export class PostRepository {
     await this.commentRepository.updateComment(comment, updateCommentDto);
     return this.getPostById(post._id.toString());
   }
-
-  // updatePostWithUpdatedComment(idPost: string, idComment: string){
-  //   return this.postModel
-  //     .updateOne(
-  //       { _id: post._id, 'comments._id': comment._id },
-  //       {
-  //         $set: {
-  //           'comments.$.comment': updateCommentDto.comment,
-  //         },
-  //       },
-  //     )
-  // }
 }

@@ -18,7 +18,7 @@ import { UserDocument } from '../user/schema/user.schema';
 import { PostByIdPipe } from './_utils/post-by-id.pipe';
 import { PostDocument } from './schemas/post.schema';
 import { CommentByIdPipe } from './_utils/comment-by-id.pipe';
-import { CommentDocument } from './schemas/comment.schema';
+import { CommentDocument } from '../comment/schemas/comment.schema';
 
 @Controller('post')
 export class PostController {
@@ -52,9 +52,12 @@ export class PostController {
     return this.postService.getPostById(post);
   }
 
-  @Delete('/:postId')
-  deletePostById(@Param('postId', PostByIdPipe) id: string) {
-    return this.postService.deletePostById(id);
+  @Delete('/:postId/:userId')
+  deletePostById(
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Param('userId', UserByIdPipe) user: UserDocument,
+  ) {
+    return this.postService.deletePostById(post, user);
   }
 
   @Post('/:postId/:userId')

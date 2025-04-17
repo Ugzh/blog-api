@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { CommentModule } from './comment/comment.module';
+import { NodemailerModule } from './nodemailer/nodemailer.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CommentModule } from './comment/comment.module';
     UserModule,
     EncryptionModule,
     CommentModule,
+    NodemailerModule,
   ],
   controllers: [],
   providers: [],

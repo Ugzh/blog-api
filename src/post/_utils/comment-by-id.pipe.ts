@@ -1,21 +1,19 @@
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Injectable,
+  NotFoundException,
   PipeTransform,
 } from '@nestjs/common';
 import { isValidObjectId, Model } from 'mongoose';
-import { Comment, CommentDocument } from '../schemas/comment.schema';
+import { Comment, CommentDocument } from '../../comment/schemas/comment.schema';
 import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class CommentByIdPipe
   implements PipeTransform<string, Promise<CommentDocument>>
 {
-  private readonly COMMENT_NOT_FOUND_EXCEPTION = new HttpException(
+  private readonly COMMENT_NOT_FOUND_EXCEPTION = new NotFoundException(
     'Comment not found',
-    HttpStatus.NOT_FOUND,
   );
 
   constructor(

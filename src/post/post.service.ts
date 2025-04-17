@@ -7,13 +7,12 @@ import {
 import { PostRepository } from './post.repository';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { PostMapper } from './post.mapper';
-import { isValidObjectId } from 'mongoose';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserDocument } from '../user/schema/user.schema';
 import { PostDocument } from './schemas/post.schema';
-import { CommentDocument } from './schemas/comment.schema';
+import { CommentDocument } from '../comment/schemas/comment.schema';
 
 @Injectable()
 export class PostService {
@@ -49,14 +48,10 @@ export class PostService {
     return this.postMapper.fromDbToPost(post);
   };
 
-  deletePostById = (id: string) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.postRepository.deletePostById(id);
+  deletePostById = (post: PostDocument, user: UserDocument) => {
+    if (user._id.toString() !== post.userId.toString())
+      throw new UnauthorizedException('You can only delete your post');
+    return this.postRepository.deletePostById(post);
   };
 
   updatePostById = (
@@ -71,7 +66,7 @@ export class PostService {
       );
     }
     if (user._id.toString() !== post.userId.toString())
-      throw new UnauthorizedException('You can only update your article');
+      throw new UnauthorizedException('You can only update your post');
     return this.postRepository.updatePostById(post, updatePostDto);
   };
 
