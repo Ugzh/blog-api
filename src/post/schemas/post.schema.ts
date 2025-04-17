@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { CategoryEnum } from '../_utils/enums/category.enum';
 
 export type PostDocument = HydratedDocument<Post>;
 
@@ -17,8 +18,8 @@ export class Post {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({ required: true })
-  category: string[];
+  @Prop({ enum: CategoryEnum, type: [String], required: true })
+  category: CategoryEnum[];
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Comment' }], default: [] })
   comments: Types.ObjectId[];

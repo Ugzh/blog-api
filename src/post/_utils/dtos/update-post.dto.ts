@@ -1,5 +1,6 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsString } from 'class-validator';
 import { Optional } from 'class-validator-extended';
+import { CategoryEnum } from '../enums/category.enum';
 
 export class UpdatePostDto {
   @Optional()
@@ -12,5 +13,6 @@ export class UpdatePostDto {
 
   @Optional()
   @IsArray()
-  category: string[];
+  @IsEnum(CategoryEnum, { each: true })
+  category: CategoryEnum[];
 }

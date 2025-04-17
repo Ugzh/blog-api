@@ -1,4 +1,5 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsString } from 'class-validator';
+import { CategoryEnum } from '../enums/category.enum';
 
 export class CreatePostDto {
   @IsString()
@@ -7,6 +8,8 @@ export class CreatePostDto {
   text: string;
   @IsString()
   author: string;
+
   @IsArray()
-  category: string[];
+  @IsEnum(CategoryEnum, { each: true })
+  category: CategoryEnum[];
 }

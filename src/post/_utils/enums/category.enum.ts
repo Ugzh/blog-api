@@ -1,0 +1,8 @@
+export enum CategoryEnum {
+  COMMERCIAL = 'COMMERCIAL',
+  BUSINESS = 'BUSINESS',
+  HISTORY = 'HISTORY',
+  SPORT = 'SPORT',
+  MATHS = 'MATHS',
+  EDUCATION = 'EDUCATION',
+}

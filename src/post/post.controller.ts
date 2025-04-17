@@ -13,19 +13,25 @@ import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { UserByIdPipe } from '../user/_utils/user-by-id.pipe';
+import { UserDocument } from '../user/schema/user.schema';
+import { PostByIdPipe } from './_utils/post-by-id.pipe';
+import { PostDocument } from './schemas/post.schema';
+import { CommentByIdPipe } from './_utils/comment-by-id.pipe';
+import { CommentDocument } from './schemas/comment.schema';
 
 @Controller('post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Get()
-  getAllPosts() {
-    return this.postService.getAllPosts();
+  @Get('/author')
+  getPostByAuthor(@Query('author') author: string) {
+    return this.postService.getAllPostByUser(author);
   }
 
   @Get()
-  getPostByAuthor(@Query('author') author: string) {
-    return this.postService.getAllPostByUser(author);
+  getAllPosts() {
+    return this.postService.getAllPosts();
   }
 
   @Post()
@@ -33,39 +39,45 @@ export class PostController {
     return this.postService.createPost(createPostDto);
   }
 
+  @Post('/:postId/comment')
+  createComment(
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return this.postService.createComment(post, createCommentDto);
+  }
+
   @Get('/:postId')
-  getPostById(@Param('postId') id: string) {
-    return this.postService.getPostById(id);
+  getPostById(@Param('postId', PostByIdPipe) post: PostDocument) {
+    return this.postService.getPostById(post);
   }
 
   @Delete('/:postId')
-  deletePostById(@Param('postId') id: string) {
+  deletePostById(@Param('postId', PostByIdPipe) id: string) {
     return this.postService.deletePostById(id);
   }
 
-  @Post('/:postId')
+  @Post('/:postId/:userId')
   updatePostById(
-    @Param('postId') id: string,
-    @Param('author') author: string,
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Param('userId', UserByIdPipe) user: UserDocument,
     @Body() updatePostDto: UpdatePostDto,
   ) {
-    return this.postService.updatePostById(id, author, updatePostDto);
+    return this.postService.updatePostById(post, user, updatePostDto);
   }
 
-  @Post('/:postId/comment')
-  createComment(
-    @Param('postId') id: string,
-    @Body() createCommentDto: CreateCommentDto,
-  ) {
-    return this.postService.createComment(id, createCommentDto);
-  }
-
-  @Patch('/:postId/comment/:idComment')
+  @Patch('/:postId/comment/:idComment/:userId')
   updateComment(
-    @Param('postId') idPost: string,
-    @Param('idComment') idComment: string,
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Param('idComment', CommentByIdPipe) comment: CommentDocument,
+    @Param('userId', UserByIdPipe) user: UserDocument,
     @Body() updateCommentDto: UpdateCommentDto,
   ) {
-    return this.postService.updateComment(idPost, idComment, updateCommentDto);
+    return this.postService.updateComment(
+      post,
+      comment,
+      user,
+      updateCommentDto,
+    );
   }
 }

@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { PostMapper } from './post.mapper';
@@ -6,6 +11,9 @@ import { isValidObjectId } from 'mongoose';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { UserDocument } from '../user/schema/user.schema';
+import { PostDocument } from './schemas/post.schema';
+import { CommentDocument } from './schemas/comment.schema';
 
 @Injectable()
 export class PostService {
@@ -14,8 +22,9 @@ export class PostService {
     private readonly postMapper: PostMapper,
   ) {}
 
-  getAllPosts = () => {
-    return this.postRepository.getAllPosts();
+  getAllPosts = async () => {
+    const posts = await this.postRepository.getAllPosts();
+    return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 
   getAllPostByUser = async (author: string) => {
@@ -26,12 +35,7 @@ export class PostService {
   };
 
   createPost = async (createPostDto: CreatePostDto) => {
-    if (
-      (createPostDto.author.length &&
-        createPostDto.text.length &&
-        createPostDto.category.length &&
-        createPostDto.title.length) < 1
-    ) {
+    if (Object.keys(createPostDto).length === 0) {
       throw new HttpException(
         'At least 1 field is empty',
         HttpStatus.BAD_REQUEST,
@@ -41,14 +45,7 @@ export class PostService {
     return this.postMapper.fromDbToPost(post);
   };
 
-  getPostById = async (id: string) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const post = await this.postRepository.getPostById(id);
+  getPostById = (post: PostDocument) => {
     return this.postMapper.fromDbToPost(post);
   };
 
@@ -63,32 +60,22 @@ export class PostService {
   };
 
   updatePostById = (
-    id: string,
-    author: string,
+    post: PostDocument,
+    user: UserDocument,
     updatePostDto: UpdatePostDto,
   ) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
     if (!updatePostDto || Object.keys(updatePostDto).length === 0) {
       throw new HttpException(
         'Fill at least one field',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.updatePostById(id, author, updatePostDto);
+    if (user._id.toString() !== post.userId.toString())
+      throw new UnauthorizedException('You can only update your article');
+    return this.postRepository.updatePostById(post, updatePostDto);
   };
 
-  createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
-    if (!isValidObjectId(idPost)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+  createComment = (post: PostDocument, createCommentDto: CreateCommentDto) => {
     if (
       (createCommentDto.comment.length || createCommentDto.author.length) < 1
     ) {
@@ -97,30 +84,23 @@ export class PostService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.createComment(idPost, createCommentDto);
+    return this.postRepository.createComment(post, createCommentDto);
   };
 
   updateComment = (
-    idPost: string,
-    idComment: string,
+    post: PostDocument,
+    comment: CommentDocument,
+    user: UserDocument,
     updateCommentDto: UpdateCommentDto,
   ) => {
-    if (!isValidObjectId(idPost) || !isValidObjectId(idPost)) {
-      throw new HttpException(
-        'Wrong id article or comment format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    if (user._id.toString() !== comment.userId.toString())
+      throw new UnauthorizedException('You can only update your comment');
     if (updateCommentDto.comment.length < 1) {
       throw new HttpException(
         'At least 1 field is empty',
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.updateComment(
-      idPost,
-      idComment,
-      updateCommentDto,
-    );
+    return this.postRepository.updateComment(post, comment, updateCommentDto);
   };
 }

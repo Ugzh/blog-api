@@ -4,6 +4,7 @@ import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { EncryptionModule } from './encryption/encryption.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { EncryptionModule } from './encryption/encryption.module';
     AuthModule,
     UserModule,
     EncryptionModule,
+    CommentModule,
   ],
   controllers: [],
   providers: [],

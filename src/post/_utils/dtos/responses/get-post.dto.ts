@@ -5,7 +5,7 @@ export class GetPostDto {
   title: string;
   text: string;
   author: string;
-  userId: Types.ObjectId;
+  user: Types.ObjectId;
   category: string[];
   comments: Types.ObjectId[];
   timeToRead: number;

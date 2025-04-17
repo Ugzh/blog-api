@@ -1,13 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from './schemas/post.schema';
+import { Post, PostDocument } from './schemas/post.schema';
 import { Model } from 'mongoose';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
-import { Comment } from './schemas/comment.schema';
+import { Comment, CommentDocument } from './schemas/comment.schema';
 
 @Injectable()
 export class PostRepository {
@@ -49,9 +49,10 @@ export class PostRepository {
       .exec();
   };
 
-  getPostById = (id: string) => {
+  getPostById = async (idPost: string) => {
     return this.postModel
-      .findById(id)
+      .findOne({ _id: idPost })
+      .populate('comments', 'comment')
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };
@@ -78,19 +79,15 @@ export class PostRepository {
       .exec();
   };
 
-  updatePostById = async (
-    id: string,
-    author: string,
-    updatePostDto: UpdatePostDto,
-  ) => {
+  updatePostById = async (post: PostDocument, updatePostDto: UpdatePostDto) => {
     return this.postModel
-      .updateOne({ _id: id }, { $set: { ...updatePostDto } })
+      .updateOne({ _id: post._id }, { $set: { ...updatePostDto } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };
 
   createComment = async (
-    idPost: string,
+    post: PostDocument,
     createCommentDto: CreateCommentDto,
   ) => {
     const user = await this.userRepository.findUserByUsername(
@@ -104,19 +101,19 @@ export class PostRepository {
     });
 
     return this.postModel
-      .updateOne({ _id: idPost }, { $push: { comments: comment._id } })
+      .updateOne({ _id: post._id }, { $push: { comments: comment._id } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };
 
   updateComment = (
-    idPost: string,
-    idComment: string,
+    post: PostDocument,
+    comment: CommentDocument,
     updateCommentDto: UpdateCommentDto,
   ) => {
     return this.postModel
       .updateOne(
-        { _id: idPost, 'comments._id': idComment },
+        { _id: post._id, 'comments._id': comment._id },
         {
           $set: {
             'comments.$.comment': updateCommentDto.comment,

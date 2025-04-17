@@ -9,7 +9,7 @@ export class PostMapper {
     title: postDocument.title,
     text: postDocument.text,
     author: postDocument.author,
-    userId: postDocument.userId,
+    user: postDocument.userId,
     category: postDocument.category,
     comments: postDocument.comments,
     timeToRead: postDocument.timeToRead,
