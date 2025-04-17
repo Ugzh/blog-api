@@ -7,7 +7,8 @@ import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
-import { Comment, CommentDocument } from './schemas/comment.schema';
+import { CommentDocument } from './schemas/comment.schema';
+import { CommentRepository } from '../comment/comment.repository';
 
 @Injectable()
 export class PostRepository {
@@ -19,17 +20,12 @@ export class PostRepository {
     'Post not found',
     HttpStatus.NOT_FOUND,
   );
-  private readonly COMMENT_NOT_FOUND_EXCEPTION = new HttpException(
-    'Comment not found',
-    HttpStatus.NOT_FOUND,
-  );
 
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
-    @InjectModel(Comment.name)
-    private commentModel: Model<Comment>,
     private userRepository: UserRepository,
+    private commentRepository: CommentRepository,
   ) {}
 
   getAllPosts = () => {
@@ -86,41 +82,42 @@ export class PostRepository {
       .exec();
   };
 
-  createComment = async (
+  async updatePostWithNewComment(
     post: PostDocument,
     createCommentDto: CreateCommentDto,
-  ) => {
-    const user = await this.userRepository.findUserByUsername(
-      createCommentDto.author,
+  ) {
+    const comment = await this.commentRepository.createComment(
+      post,
+      createCommentDto,
     );
-
-    const comment = await this.commentModel.create({
-      author: createCommentDto.author,
-      comment: createCommentDto.comment,
-      userId: user._id,
-    });
-
     return this.postModel
-      .updateOne({ _id: post._id }, { $push: { comments: comment._id } })
+      .findOneAndUpdate(
+        { _id: post._id },
+        { $push: { comments: comment._id } },
+        { new: true },
+      )
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
-  };
+  }
 
-  updateComment = (
+  async updatePostWithUpdatedComment(
     post: PostDocument,
     comment: CommentDocument,
     updateCommentDto: UpdateCommentDto,
-  ) => {
-    return this.postModel
-      .updateOne(
-        { _id: post._id, 'comments._id': comment._id },
-        {
-          $set: {
-            'comments.$.comment': updateCommentDto.comment,
-          },
-        },
-      )
-      .orFail(this.COMMENT_NOT_FOUND_EXCEPTION)
-      .exec();
-  };
+  ) {
+    await this.commentRepository.updateComment(comment, updateCommentDto);
+    return this.getPostById(post._id.toString());
+  }
+
+  // updatePostWithUpdatedComment(idPost: string, idComment: string){
+  //   return this.postModel
+  //     .updateOne(
+  //       { _id: post._id, 'comments._id': comment._id },
+  //       {
+  //         $set: {
+  //           'comments.$.comment': updateCommentDto.comment,
+  //         },
+  //       },
+  //     )
+  // }
 }

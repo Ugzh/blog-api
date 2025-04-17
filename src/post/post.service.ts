@@ -84,7 +84,7 @@ export class PostService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.createComment(post, createCommentDto);
+    return this.postRepository.updatePostWithNewComment(post, createCommentDto);
   };
 
   updateComment = (
@@ -101,6 +101,10 @@ export class PostService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.postRepository.updateComment(post, comment, updateCommentDto);
+    return this.postRepository.updatePostWithUpdatedComment(
+      post,
+      comment,
+      updateCommentDto,
+    );
   };
 }

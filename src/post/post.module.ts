@@ -7,6 +7,8 @@ import { Post, PostSchema } from './schemas/post.schema';
 import { PostMapper } from './post.mapper';
 import { UserModule } from '../user/user.module';
 import { Comment, CommentSchema } from './schemas/comment.schema';
+import { CommentModule } from '../comment/comment.module';
+import { CommentRepository } from '../comment/comment.repository';
 
 @Module({
   imports: [
@@ -15,8 +17,9 @@ import { Comment, CommentSchema } from './schemas/comment.schema';
       { name: Comment.name, schema: CommentSchema },
     ]),
     UserModule,
+    CommentModule,
   ],
   controllers: [PostController],
-  providers: [PostService, PostRepository, PostMapper],
+  providers: [PostService, PostRepository, PostMapper, CommentRepository],
 })
 export class PostModule {}
