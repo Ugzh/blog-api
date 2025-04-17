@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
 import { Model } from 'mongoose';
@@ -12,13 +12,11 @@ import { CommentRepository } from '../comment/comment.repository';
 
 @Injectable()
 export class PostRepository {
-  private readonly USER_NOT_FOUND_EXCEPTION = new HttpException(
+  private readonly USER_NOT_FOUND_EXCEPTION = new NotFoundException(
     'User not found',
-    HttpStatus.NOT_FOUND,
   );
-  private readonly POST_NOT_FOUND_EXCEPTION = new HttpException(
+  private readonly POST_NOT_FOUND_EXCEPTION = new NotFoundException(
     'Post not found',
-    HttpStatus.NOT_FOUND,
   );
 
   constructor(
