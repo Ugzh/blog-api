@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -31,6 +32,14 @@ export class PostController {
   }
 
   @Get()
+  getPostsPagination(
+    @Query('page', ParseIntPipe) page: number = 1,
+    @Query('limit', ParseIntPipe) limit: number = 10,
+  ) {
+    return this.postService.getAllPosts(page, limit);
+  }
+
+  @Get('/all')
   getAllPosts() {
     return this.postService.getAllPosts();
   }

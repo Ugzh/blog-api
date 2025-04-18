@@ -28,15 +28,17 @@ export class PostRepository {
     private minioService: MinioService,
   ) {}
 
-  getAllPosts = () => {
+  getAllPosts = (page: number = 1, limit: number = 10) => {
     return this.postModel
       .find()
+      .skip((page - 1) * limit)
+      .limit(limit)
       .populate('comments', 'comment')
       .populate('userId', 'username')
       .exec();
   };
 
-  getAllPostByUser = (author: string) => {
+  getAllPostByUser = async (author: string) => {
     return this.postModel
       .find({ author })
       .populate('comments', 'comment')

@@ -23,8 +23,8 @@ export class PostService {
     private readonly minioService: MinioService,
   ) {}
 
-  getAllPosts = async () => {
-    const posts = await this.postRepository.getAllPosts();
+  getAllPosts = async (page?: number, limit?: number) => {
+    const posts = await this.postRepository.getAllPosts(page, limit);
     return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 
