@@ -4,8 +4,8 @@ import { Post, PostDocument } from './schemas/post.schema';
 import { Model } from 'mongoose';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
-import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
-import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
+import { UpdateCommentDto } from '../comment/_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
 import { CommentDocument } from '../comment/schemas/comment.schema';
 import { CommentRepository } from '../comment/comment.repository';
@@ -31,7 +31,7 @@ export class PostRepository {
   getAllPosts = (page: number = 1, limit: number = 10) => {
     return this.postModel
       .find()
-      .skip((page - 1) * limit)
+      .skip((page <= 0 ? 1 : page - 1) * limit)
       .limit(limit)
       .populate('comments', 'comment')
       .populate('userId', 'username')

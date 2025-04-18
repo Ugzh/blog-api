@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { EncryptionService } from '../encryption/encryption.service';
 import { LoginDto } from './_utils/dtos/login.dto';
 import JwtPayloadInterface from './_utils/interfaces/jwt-payload.interface';
-import { ForgetPasswordDto } from './dtos/forget-password.dto';
+import { ForgetPasswordDto } from './_utils/dtos/forget-password.dto';
 import { NodemailerService } from '../nodemailer/nodemailer.service';
 
 @Injectable()

@@ -8,15 +8,22 @@ import {
   MaxFileSize,
   MemoryStoredFile,
 } from 'nestjs-form-data';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePostDto {
+  @ApiProperty()
   @IsString()
   title: string;
+
+  @ApiProperty()
   @IsString()
   text: string;
+
+  @ApiProperty()
   @IsString()
   author: string;
 
+  @ApiProperty({ enum: CategoryEnum, type: 'array' })
   @IsArray()
   @IsEnum(CategoryEnum, { each: true })
   @Transform(({ value }): string[] => {

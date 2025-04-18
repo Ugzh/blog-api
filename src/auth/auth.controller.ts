@@ -3,7 +3,7 @@ import { CreateUserDto } from '../user/_utils/dtos/create-user.dto';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './_utils/dtos/login.dto';
 import { AuthService } from './auth.service';
-import { ForgetPasswordDto } from './dtos/forget-password.dto';
+import { ForgetPasswordDto } from './_utils/dtos/forget-password.dto';
 
 @Controller('auth')
 export class AuthController {
