@@ -8,5 +8,6 @@ export class GetPostDto {
   user: Types.ObjectId;
   category: string[];
   comments: Types.ObjectId[];
+  imageName: string | null;
   timeToRead: number;
 }

@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { CommentModule } from './comment/comment.module';
 import { NodemailerModule } from './nodemailer/nodemailer.module';
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NodemailerModule } from './nodemailer/nodemailer.module';
     EncryptionModule,
     CommentModule,
     NodemailerModule,
+    MinioModule,
   ],
   controllers: [],
   providers: [],

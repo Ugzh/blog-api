@@ -9,6 +9,8 @@ import { UserModule } from '../user/user.module';
 import { Comment, CommentSchema } from '../comment/schemas/comment.schema';
 import { CommentModule } from '../comment/comment.module';
 import { CommentRepository } from '../comment/comment.repository';
+import { MinioService } from '../minio/minio.service';
+import { NestjsFormDataModule } from 'nestjs-form-data';
 
 @Module({
   imports: [
@@ -18,8 +20,15 @@ import { CommentRepository } from '../comment/comment.repository';
     ]),
     UserModule,
     CommentModule,
+    NestjsFormDataModule,
   ],
   controllers: [PostController],
-  providers: [PostService, PostRepository, PostMapper, CommentRepository],
+  providers: [
+    PostService,
+    PostRepository,
+    PostMapper,
+    CommentRepository,
+    MinioService,
+  ],
 })
 export class PostModule {}

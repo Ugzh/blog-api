@@ -12,6 +12,7 @@ export class PostMapper {
     user: postDocument.userId,
     category: postDocument.category,
     comments: postDocument.comments,
+    imageName: postDocument.imageName,
     timeToRead: postDocument.timeToRead,
   });
 }

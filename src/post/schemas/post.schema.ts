@@ -24,6 +24,9 @@ export class Post {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Comment' }], default: [] })
   comments: Types.ObjectId[];
 
+  @Prop({ type: String, default: null })
+  imageName: string | null;
+
   @Prop({ required: true })
   timeToRead: number;
 

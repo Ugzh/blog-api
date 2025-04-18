@@ -13,12 +13,14 @@ import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserDocument } from '../user/schema/user.schema';
 import { PostDocument } from './schemas/post.schema';
 import { CommentDocument } from '../comment/schemas/comment.schema';
+import { MinioService } from '../minio/minio.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly postMapper: PostMapper,
+    private readonly minioService: MinioService,
   ) {}
 
   getAllPosts = async () => {
@@ -34,11 +36,8 @@ export class PostService {
   };
 
   createPost = async (createPostDto: CreatePostDto) => {
-    if (Object.keys(createPostDto).length === 0) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (createPostDto.image) {
+      await this.minioService.sendImage(createPostDto.image);
     }
     const post = await this.postRepository.createPost(createPostDto);
     return this.postMapper.fromDbToPost(post);

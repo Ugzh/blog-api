@@ -9,6 +9,7 @@ import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
 import { UserRepository } from '../user/user.repository';
 import { CommentDocument } from '../comment/schemas/comment.schema';
 import { CommentRepository } from '../comment/comment.repository';
+import { MinioService } from '../minio/minio.service';
 
 @Injectable()
 export class PostRepository {
@@ -24,6 +25,7 @@ export class PostRepository {
     private postModel: Model<Post>,
     private userRepository: UserRepository,
     private commentRepository: CommentRepository,
+    private minioService: MinioService,
   ) {}
 
   getAllPosts = () => {
@@ -62,7 +64,10 @@ export class PostRepository {
       userId: user._id,
       category: createPostDto.category,
       comments: [],
-      timeToRead: Math.ceil(createPostDto.text.length / 600),
+      imageName: createPostDto.image
+        ? await this.minioService.getUrlImage(createPostDto.image)
+        : null,
+      timeToRead: Math.ceil(createPostDto.text.length / 60),
     });
   };
 

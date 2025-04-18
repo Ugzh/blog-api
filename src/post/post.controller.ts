@@ -19,6 +19,7 @@ import { PostByIdPipe } from './_utils/post-by-id.pipe';
 import { PostDocument } from './schemas/post.schema';
 import { CommentByIdPipe } from './_utils/comment-by-id.pipe';
 import { CommentDocument } from '../comment/schemas/comment.schema';
+import { FormDataRequest } from 'nestjs-form-data';
 
 @Controller('post')
 export class PostController {
@@ -35,6 +36,7 @@ export class PostController {
   }
 
   @Post()
+  @FormDataRequest()
   createPost(@Body() createPostDto: CreatePostDto) {
     return this.postService.createPost(createPostDto);
   }
