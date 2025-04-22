@@ -9,7 +9,6 @@ import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { PostMapper } from './post.mapper';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
-import { UpdateCommentDto } from '../comment/_utils/dtos/update-comment.dto';
 import { UserDocument } from '../user/schema/user.schema';
 import { PostDocument } from './schemas/post.schema';
 import { CommentDocument } from '../comment/schemas/comment.schema';
@@ -44,7 +43,7 @@ export class PostService {
   };
 
   getPostById = (post: PostDocument) => {
-    return this.postMapper.fromDbToPost(post);
+    return this.postRepository.getPostByIdWithLikes(post._id);
   };
 
   deletePostById = (post: PostDocument, user: UserDocument) => {
@@ -67,23 +66,17 @@ export class PostService {
     return this.postRepository.updatePostWithNewComment(post, createCommentDto);
   };
 
-  updateComment = (
-    post: PostDocument,
-    comment: CommentDocument,
-    user: UserDocument,
-    updateCommentDto: UpdateCommentDto,
-  ) => {
-    if (user._id.toString() !== comment.userId.toString())
-      throw new UnauthorizedException('You can only update your comment');
-    return this.postRepository.updatePostWithUpdatedComment(
-      post,
-      comment,
-      updateCommentDto,
-    );
-  };
-
   updateLikeOnPost = async (post: PostDocument, user: UserDocument) => {
     const postUpdated = await this.postRepository.updateLikeOnPost(post, user);
     return this.postMapper.fromDbToPost(postUpdated);
+  };
+
+  updateLikeOnComment = async (
+    post: PostDocument,
+    comment: CommentDocument,
+    user: UserDocument,
+  ) => {
+    await this.postRepository.updateLikeOnComment(comment, user);
+    return this.postRepository.getPostByIdWithLikes(post._id);
   };
 }

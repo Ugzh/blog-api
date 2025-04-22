@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { LikeService } from './like.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Like, LikeSchema } from './schemas/like.schema';
-import { LikeRepository } from './like.repository';
 import { PostModule } from '../post/post.module';
 
 @Module({
@@ -10,6 +9,6 @@ import { PostModule } from '../post/post.module';
     MongooseModule.forFeature([{ name: Like.name, schema: LikeSchema }]),
     PostModule,
   ],
-  providers: [LikeService, LikeRepository],
+  providers: [LikeService],
 })
 export class LikeModule {}

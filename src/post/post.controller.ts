@@ -5,7 +5,6 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -13,7 +12,6 @@ import { PostService } from './post.service';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
-import { UpdateCommentDto } from '../comment/_utils/dtos/update-comment.dto';
 import { UserByIdPipe } from '../user/_utils/user-by-id.pipe';
 import { UserDocument } from '../user/schema/user.schema';
 import { PostByIdPipe } from './_utils/post-by-id.pipe';
@@ -85,28 +83,22 @@ export class PostController {
     return this.postService.updatePostById(post, user, updatePostDto);
   }
 
-  @Patch('/:postId/comment/:idComment/:userId')
-  @ApiOperation({ summary: 'Update comment by post ID' })
-  updateComment(
-    @Param('postId', PostByIdPipe) post: PostDocument,
-    @Param('idComment', CommentByIdPipe) comment: CommentDocument,
-    @Param('userId', UserByIdPipe) user: UserDocument,
-    @Body() updateCommentDto: UpdateCommentDto,
-  ) {
-    return this.postService.updateComment(
-      post,
-      comment,
-      user,
-      updateCommentDto,
-    );
-  }
-
   @Post('/like-post/:postId/:userId')
   @ApiOperation({ summary: 'Like post by Id' })
-  createLikeOnPost(
+  updatedLikeOnPost(
     @Param('postId', PostByIdPipe) post: PostDocument,
     @Param('userId', UserByIdPipe) user: UserDocument,
   ) {
     return this.postService.updateLikeOnPost(post, user);
+  }
+
+  @Post('/like-comment/:postId/:commentId/:userId')
+  @ApiOperation({ summary: 'Like post by Id' })
+  updatedLikeOnComment(
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Param('commentId', CommentByIdPipe) comment: CommentDocument,
+    @Param('userId', UserByIdPipe) user: UserDocument,
+  ) {
+    return this.postService.updateLikeOnComment(post, comment, user);
   }
 }

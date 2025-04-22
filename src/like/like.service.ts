@@ -5,9 +5,6 @@ import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class LikeService {
-  private readonly LIKE_NOT_FOUND_EXCEPTION = new NotFoundException(
-    "Like doesn't exists",
-  );
   private readonly POST_NOT_FOUND_EXCEPTION = new NotFoundException(
     'Post not found',
   );
@@ -33,6 +30,20 @@ export class LikeService {
       return this.likeModel.create({
         userId,
         postId,
+      });
+    }
+  }
+
+  async updateLikeOnComment(commentId: Types.ObjectId, userId: Types.ObjectId) {
+    const commentLikeByUser = await this.likeModel
+      .find({ $and: [{ commentId }, { userId }] })
+      .exec();
+    if (commentLikeByUser.length !== 0) {
+      return this.likeModel.deleteOne({ _id: commentLikeByUser[0]._id }).exec();
+    } else {
+      return this.likeModel.create({
+        userId,
+        commentId,
       });
     }
   }
