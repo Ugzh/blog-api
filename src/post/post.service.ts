@@ -24,7 +24,7 @@ export class PostService {
   ) {}
 
   getAllPosts = async (page?: number, limit?: number) => {
-    const posts = await this.postRepository.getAllPosts(page, limit);
+    const posts = await this.postRepository.getAllPostsWithLikes(page, limit);
     return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 
@@ -58,26 +58,12 @@ export class PostService {
     user: UserDocument,
     updatePostDto: UpdatePostDto,
   ) => {
-    if (!updatePostDto || Object.keys(updatePostDto).length === 0) {
-      throw new HttpException(
-        'Fill at least one field',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
     if (user._id.toString() !== post.userId.toString())
       throw new UnauthorizedException('You can only update your post');
     return this.postRepository.updatePostById(post, updatePostDto);
   };
 
   createComment = (post: PostDocument, createCommentDto: CreateCommentDto) => {
-    if (
-      (createCommentDto.comment.length || createCommentDto.author.length) < 1
-    ) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
     return this.postRepository.updatePostWithNewComment(post, createCommentDto);
   };
 
@@ -89,16 +75,15 @@ export class PostService {
   ) => {
     if (user._id.toString() !== comment.userId.toString())
       throw new UnauthorizedException('You can only update your comment');
-    if (updateCommentDto.comment.length < 1) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
     return this.postRepository.updatePostWithUpdatedComment(
       post,
       comment,
       updateCommentDto,
     );
+  };
+
+  updateLikeOnPost = async (post: PostDocument, user: UserDocument) => {
+    const postUpdated = await this.postRepository.updateLikeOnPost(post, user);
+    return this.postMapper.fromDbToPost(postUpdated);
   };
 }

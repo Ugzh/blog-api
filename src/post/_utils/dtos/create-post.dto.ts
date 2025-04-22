@@ -34,9 +34,10 @@ export class CreatePostDto {
   })
   category: CategoryEnum[];
 
+  @ApiProperty()
   @Optional()
   @IsFile()
   @MaxFileSize(5e6)
-  @HasMimeType(['image/jpeg', 'image/png', 'image/jpg'])
+  @HasMimeType(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
   image: MemoryStoredFile;
 }

@@ -25,7 +25,7 @@ export class Post {
   comments: Types.ObjectId[];
 
   @Prop({ type: String, default: null })
-  imageName: string | null;
+  image_url: string | null;
 
   @Prop({ required: true })
   timeToRead: number;

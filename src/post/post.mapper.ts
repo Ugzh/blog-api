@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { PostDocument } from './schemas/post.schema';
 import { GetPostDto } from './_utils/dtos/responses/get-post.dto';
+import { PostWithLikeInterface } from './_utils/interfaces/post-with-like.interface';
 
 @Injectable()
 export class PostMapper {
-  fromDbToPost = (postDocument: PostDocument): GetPostDto => ({
-    id: postDocument._id.toString(),
-    title: postDocument.title,
-    text: postDocument.text,
-    author: postDocument.author,
-    user: postDocument.userId,
-    category: postDocument.category,
-    comments: postDocument.comments,
-    imageName: postDocument.imageName,
-    timeToRead: postDocument.timeToRead,
+  fromDbToPost = (postWithLikes: PostWithLikeInterface): GetPostDto => ({
+    id: postWithLikes._id.toString(),
+    title: postWithLikes.title,
+    text: postWithLikes.text,
+    author: postWithLikes.author,
+    user: postWithLikes.user,
+    nbLikes: postWithLikes.nbLikes,
+    category: postWithLikes.category,
+    comments: postWithLikes.comments,
+    image_url: postWithLikes.image_url,
+    timeToRead: postWithLikes.timeToRead,
   });
 }

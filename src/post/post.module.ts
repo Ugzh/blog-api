@@ -11,12 +11,15 @@ import { CommentModule } from '../comment/comment.module';
 import { CommentRepository } from '../comment/comment.repository';
 import { MinioService } from '../minio/minio.service';
 import { NestjsFormDataModule } from 'nestjs-form-data';
+import { LikeService } from '../like/like.service';
+import { Like, LikeSchema } from '../like/schemas/like.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Post.name, schema: PostSchema },
       { name: Comment.name, schema: CommentSchema },
+      { name: Like.name, schema: LikeSchema },
     ]),
     UserModule,
     CommentModule,
@@ -29,6 +32,7 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
     PostMapper,
     CommentRepository,
     MinioService,
+    LikeService,
   ],
 })
 export class PostModule {}

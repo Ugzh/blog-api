@@ -100,4 +100,13 @@ export class PostController {
       updateCommentDto,
     );
   }
+
+  @Post('/like-post/:postId/:userId')
+  @ApiOperation({ summary: 'Like post by Id' })
+  createLikeOnPost(
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Param('userId', UserByIdPipe) user: UserDocument,
+  ) {
+    return this.postService.updateLikeOnPost(post, user);
+  }
 }

@@ -51,16 +51,7 @@ export class CommentRepository {
       .exec();
   };
 
-  // deleteManyComments = async (comments: CommentDocument[]) => {
-  //   const commentsId = comments.map((x) => x._id);
-  //   return this.commentModel
-  //     .deleteMany({ _id: { $in: commentsId } })
-  //     .orFail(this.COMMENT_NOT_DELETE)
-  //     .exec();
-  // };
-  //
   deleteManyComments = async (comments: Types.ObjectId[]) => {
-    //const commentsId = comments.map((x) => x._id);
     return this.commentModel
       .deleteMany({ _id: { $in: comments } })
       .orFail(this.COMMENT_NOT_DELETE)

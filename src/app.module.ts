@@ -7,6 +7,7 @@ import { EncryptionModule } from './encryption/encryption.module';
 import { CommentModule } from './comment/comment.module';
 import { NodemailerModule } from './nodemailer/nodemailer.module';
 import { MinioModule } from './minio/minio.module';
+import { LikeModule } from './like/like.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MinioModule } from './minio/minio.module';
     CommentModule,
     NodemailerModule,
     MinioModule,
+    LikeModule,
   ],
   controllers: [],
   providers: [],

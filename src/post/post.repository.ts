@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
-import { Model } from 'mongoose';
+import { Aggregate, Model } from 'mongoose';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
@@ -10,6 +10,8 @@ import { UserRepository } from '../user/user.repository';
 import { CommentDocument } from '../comment/schemas/comment.schema';
 import { CommentRepository } from '../comment/comment.repository';
 import { MinioService } from '../minio/minio.service';
+import { LikeService } from '../like/like.service';
+import { UserDocument } from '../user/schema/user.schema';
 
 @Injectable()
 export class PostRepository {
@@ -23,19 +25,102 @@ export class PostRepository {
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
-    private userRepository: UserRepository,
-    private commentRepository: CommentRepository,
-    private minioService: MinioService,
+    private readonly userRepository: UserRepository,
+    private readonly commentRepository: CommentRepository,
+    private readonly minioService: MinioService,
+    private readonly likeService: LikeService,
   ) {}
 
-  getAllPosts = (page: number = 1, limit: number = 10) => {
-    return this.postModel
-      .find()
-      .skip((page <= 0 ? 1 : page - 1) * limit)
-      .limit(limit)
-      .populate('comments', 'comment')
-      .populate('userId', 'username')
-      .exec();
+  getAllPostsWithLikes = async (
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<Aggregate<Array<PostDocument>>> => {
+    return this.postModel.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
+            { $project: { _id: 1, username: 1 } },
+          ],
+          as: 'user',
+        },
+      },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ['$user', 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'comments',
+          foreignField: '_id',
+          as: 'comments',
+          pipeline: [{ $project: { _id: 1, comment: 1, userId: 1 } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'likes',
+          let: { postId: '$_id', commentIds: '$comments._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$$postId', '$postId'] },
+                    { $in: ['$commentId', '$$commentIds'] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'allLikes',
+        },
+      },
+      {
+        $addFields: {
+          nbLikes: {
+            $size: {
+              $filter: {
+                input: '$allLikes',
+                cond: { $eq: ['$$this.postId', '$_id'] },
+              },
+            },
+          },
+          comments: {
+            $map: {
+              input: '$comments',
+              as: 'comment',
+              in: {
+                $mergeObjects: [
+                  '$$comment',
+                  {
+                    nbLikes: {
+                      $size: {
+                        $filter: {
+                          input: '$allLikes',
+                          cond: { $eq: ['$$this.commentId', '$$comment._id'] },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          allLikes: 0,
+        },
+      },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]);
   };
 
   getAllPostByUser = async (author: string) => {
@@ -66,7 +151,7 @@ export class PostRepository {
       userId: user._id,
       category: createPostDto.category,
       comments: [],
-      imageName: createPostDto.image
+      image_url: createPostDto.image
         ? await this.minioService.getUrlImage(createPostDto.image)
         : null,
       timeToRead: Math.ceil(createPostDto.text.length / 60),
@@ -115,6 +200,13 @@ export class PostRepository {
     updateCommentDto: UpdateCommentDto,
   ) {
     await this.commentRepository.updateComment(comment, updateCommentDto);
+    return this.getPostById(post._id.toString());
+  }
+
+  async updateLikeOnPost(post: PostDocument, user: UserDocument) {
+    //await this.likeService.createLike(user._id, post._id);
+    await this.likeService.updateLikeOnPost(user._id, post.userId);
+
     return this.getPostById(post._id.toString());
   }
 }

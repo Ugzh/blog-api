@@ -1,13 +1,15 @@
 import { Types } from 'mongoose';
+import { UserDocument } from '../../../../user/schema/user.schema';
 
 export class GetPostDto {
   id: string;
   title: string;
   text: string;
   author: string;
-  user: Types.ObjectId;
+  user?: UserDocument;
+  nbLikes?: number;
   category: string[];
   comments: Types.ObjectId[];
-  imageName: string | null;
+  image_url: string | null;
   timeToRead: number;
 }
