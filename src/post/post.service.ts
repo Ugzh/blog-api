@@ -30,7 +30,8 @@ export class PostService {
   getAllPostByUser = async (author: string) => {
     if (!author)
       throw new HttpException("Author's missing", HttpStatus.BAD_REQUEST);
-    const posts = await this.postRepository.getAllPostByUser(author);
+    const posts =
+      await this.postRepository.getAllPostsByAuhtorWithLikes(author);
     return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 

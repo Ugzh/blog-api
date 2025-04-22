@@ -123,6 +123,98 @@ export class PostRepository {
     ]);
   };
 
+  getAllPostsByAuhtorWithLikes = async (
+    author: string,
+  ): Promise<Aggregate<Array<PostDocument>>> => {
+    return this.postModel.aggregate([
+      {
+        $match: { author },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
+            { $project: { _id: 1, username: 1 } },
+          ],
+          as: 'user',
+        },
+      },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ['$user', 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'comments',
+          foreignField: '_id',
+          as: 'comments',
+          pipeline: [{ $project: { _id: 1, comment: 1, userId: 1 } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'likes',
+          let: { postId: '$_id', commentIds: '$comments._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$$postId', '$postId'] },
+                    { $in: ['$commentId', '$$commentIds'] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'allLikes',
+        },
+      },
+      {
+        $addFields: {
+          nbLikes: {
+            $size: {
+              $filter: {
+                input: '$allLikes',
+                cond: { $eq: ['$$this.postId', '$_id'] },
+              },
+            },
+          },
+          comments: {
+            $map: {
+              input: '$comments',
+              as: 'comment',
+              in: {
+                $mergeObjects: [
+                  '$$comment',
+                  {
+                    nbLikes: {
+                      $size: {
+                        $filter: {
+                          input: '$allLikes',
+                          cond: { $eq: ['$$this.commentId', '$$comment._id'] },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          allLikes: 0,
+        },
+      },
+    ]);
+  };
+
   getAllPostByUser = async (author: string) => {
     return this.postModel
       .find({ author })
