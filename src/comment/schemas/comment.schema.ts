@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type CommentDocument = HydratedDocument<Comment>;
 
@@ -11,8 +11,8 @@ export class Comment {
   @Prop({ required: true })
   comment: string;
 
-  @Prop({ required: true })
-  userId: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
 
   createdAt: Date;
 

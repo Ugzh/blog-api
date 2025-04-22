@@ -1,54 +1,234 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from './schemas/post.schema';
-import { Model } from 'mongoose';
+import { Post, PostDocument } from './schemas/post.schema';
+import { Aggregate, Model, Types } from 'mongoose';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
-import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
-import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
 import { UserRepository } from '../user/user.repository';
-import { Comment } from './schemas/comment.schema';
+import { CommentDocument } from '../comment/schemas/comment.schema';
+import { CommentRepository } from '../comment/comment.repository';
+import { MinioService } from '../minio/minio.service';
+import { LikeService } from '../like/like.service';
+import { UserDocument } from '../user/schema/user.schema';
+import { PostWithLikeInterface } from './_utils/interfaces/post-with-like.interface';
 
 @Injectable()
 export class PostRepository {
-  private readonly USER_NOT_FOUND_EXCEPTION = new HttpException(
+  private readonly USER_NOT_FOUND_EXCEPTION = new NotFoundException(
     'User not found',
-    HttpStatus.NOT_FOUND,
   );
-  private readonly POST_NOT_FOUND_EXCEPTION = new HttpException(
+  private readonly POST_NOT_FOUND_EXCEPTION = new NotFoundException(
     'Post not found',
-    HttpStatus.NOT_FOUND,
-  );
-  private readonly COMMENT_NOT_FOUND_EXCEPTION = new HttpException(
-    'Comment not found',
-    HttpStatus.NOT_FOUND,
   );
 
   constructor(
     @InjectModel(Post.name)
     private postModel: Model<Post>,
-    @InjectModel(Comment.name)
-    private commentModel: Model<Comment>,
-    private userRepository: UserRepository,
+    private readonly userRepository: UserRepository,
+    private readonly commentRepository: CommentRepository,
+    private readonly minioService: MinioService,
+    private readonly likeService: LikeService,
   ) {}
 
-  getAllPosts = () => {
-    return this.postModel.find().exec();
+  getAllPostsWithLikes = async (
+    page: number = 1,
+    limit: number = 50,
+  ): Promise<Aggregate<Array<PostDocument>>> => {
+    return this.postModel.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
+            { $project: { _id: 1, username: 1 } },
+          ],
+          as: 'user',
+        },
+      },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ['$user', 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'comments',
+          foreignField: '_id',
+          as: 'comments',
+          pipeline: [{ $project: { _id: 1, comment: 1, userId: 1 } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'likes',
+          let: { postId: '$_id', commentIds: '$comments._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$$postId', '$postId'] },
+                    { $in: ['$commentId', '$$commentIds'] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'allLikes',
+        },
+      },
+      {
+        $addFields: {
+          nbLikes: {
+            $size: {
+              $filter: {
+                input: '$allLikes',
+                cond: { $eq: ['$$this.postId', '$_id'] },
+              },
+            },
+          },
+          comments: {
+            $map: {
+              input: '$comments',
+              as: 'comment',
+              in: {
+                $mergeObjects: [
+                  '$$comment',
+                  {
+                    nbLikes: {
+                      $size: {
+                        $filter: {
+                          input: '$allLikes',
+                          cond: { $eq: ['$$this.commentId', '$$comment._id'] },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          allLikes: 0,
+        },
+      },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]);
   };
 
-  getAllPostByUser = (author: string) => {
+  getAllPostByUser = async (author: string) => {
     return this.postModel
-      .find()
-      .where({ author: author })
+      .find({ author })
+      .populate('comments', 'comment')
+      .populate('userId', 'username')
       .orFail(this.USER_NOT_FOUND_EXCEPTION)
       .exec();
   };
 
-  getPostById = async (id: string) => {
+  getPostById = async (idPost: string) => {
     return this.postModel
-      .findById(id)
+      .findOne({ _id: idPost })
+      .populate('comments', 'comment')
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
+  };
+
+  getPostByIdWithLikes = async (idPost: Types.ObjectId) => {
+    const [post]: PostWithLikeInterface[] = await this.postModel.aggregate([
+      { $match: { _id: idPost } },
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
+            { $project: { _id: 1, username: 1 } },
+          ],
+          as: 'user',
+        },
+      },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ['$user', 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: 'comments',
+          foreignField: '_id',
+          as: 'comments',
+          pipeline: [{ $project: { _id: 1, comment: 1, userId: 1 } }],
+        },
+      },
+      {
+        $lookup: {
+          from: 'likes',
+          let: { postId: '$_id', commentIds: '$comments._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$$postId', '$postId'] },
+                    { $in: ['$commentId', { $ifNull: ['$$commentIds', []] }] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'allLikes',
+        },
+      },
+      {
+        $addFields: {
+          nbLikes: {
+            $size: {
+              $filter: {
+                input: '$allLikes',
+                cond: { $eq: ['$$this.postId', '$_id'] },
+              },
+            },
+          },
+          comments: {
+            $map: {
+              input: '$comments',
+              as: 'comment',
+              in: {
+                $mergeObjects: [
+                  '$$comment',
+                  {
+                    nbLikes: {
+                      $size: {
+                        $filter: {
+                          input: '$allLikes',
+                          cond: { $eq: ['$$this.commentId', '$$comment._id'] },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          allLikes: 0,
+          'user.password': 0,
+          'user.email': 0,
+        },
+      },
+    ]);
+    return post;
   };
 
   createPost = async (createPostDto: CreatePostDto) => {
@@ -59,59 +239,58 @@ export class PostRepository {
       title: createPostDto.title,
       text: createPostDto.text,
       author: createPostDto.author,
+      userId: user._id,
       category: createPostDto.category,
-      userId: user._id,
-      timeToRead: createPostDto.text.length / 0.6,
+      comments: [],
+      image_url: createPostDto.image
+        ? await this.minioService.getUrlImage(createPostDto.image)
+        : null,
+      timeToRead: Math.ceil(createPostDto.text.length / 60),
     });
   };
 
-  deletePostById = (id: string) => {
+  deletePostById = async (post: PostDocument) => {
+    const postDelete = await this.postModel
+      .deleteOne({ _id: post._id })
+      .orFail(this.POST_NOT_FOUND_EXCEPTION)
+      .exec();
+    if (postDelete.deletedCount > 0) {
+      await this.commentRepository.deleteManyComments(post.comments);
+    }
+    return postDelete.deletedCount;
+  };
+
+  updatePostById = async (post: PostDocument, updatePostDto: UpdatePostDto) => {
     return this.postModel
-      .deleteOne({ _id: id })
+      .updateOne({ _id: post._id }, { $set: { ...updatePostDto } })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   };
 
-  updatePostById = async (id: string, updatePostDto: UpdatePostDto) => {
-    return this.postModel
-      .updateOne({ _id: id }, { $set: { ...updatePostDto } })
-      .orFail(this.POST_NOT_FOUND_EXCEPTION)
-      .exec();
-  };
-
-  createComment = async (
-    idPost: string,
+  async updatePostWithNewComment(
+    post: PostDocument,
     createCommentDto: CreateCommentDto,
-  ) => {
-    const user = await this.userRepository.findUserByUsername(
-      createCommentDto.author,
+  ) {
+    const comment = await this.commentRepository.createComment(
+      post,
+      createCommentDto,
     );
-    const comment = await this.commentModel.create({
-      author: createCommentDto.author,
-      comment: createCommentDto.comment,
-      userId: user._id,
-    });
     return this.postModel
-      .updateOne({ _id: idPost }, { $push: { comments: comment._id } })
+      .findOneAndUpdate(
+        { _id: post._id },
+        { $push: { comments: comment._id } },
+        { new: true },
+      )
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
-  };
+  }
 
-  updateComment = (
-    idPost: string,
-    idComment: string,
-    updateCommentDto: UpdateCommentDto,
-  ) => {
-    return this.postModel
-      .updateOne(
-        { _id: idPost, 'comments._id': idComment },
-        {
-          $set: {
-            'comments.$.comment': updateCommentDto.comment,
-          },
-        },
-      )
-      .orFail(this.COMMENT_NOT_FOUND_EXCEPTION)
-      .exec();
-  };
+  async updateLikeOnPost(post: PostDocument, user: UserDocument) {
+    await this.likeService.updateLikeOnPost(post._id, user._id);
+    return this.getPostByIdWithLikes(post._id);
+  }
+
+  async updateLikeOnComment(comment: CommentDocument, user: UserDocument) {
+    return this.likeService.updateLikeOnComment(comment._id, user._id);
+  }
 }

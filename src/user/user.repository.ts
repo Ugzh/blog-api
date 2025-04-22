@@ -23,11 +23,11 @@ export class UserRepository {
   ) {}
 
   findUserByEmail = (email: string) => {
-    return this.userModel
-      .findOne()
-      .where({ email })
-      .orFail(this.USER_NOT_FOUND)
-      .exec();
+    return this.userModel.findOne({ email }).orFail(this.USER_NOT_FOUND).exec();
+  };
+
+  findUserById = (userId: string) => {
+    return this.userModel.findById(userId).orFail(this.USER_NOT_FOUND).exec();
   };
 
   findUserByUsername = (username: string) => {

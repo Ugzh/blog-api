@@ -1,21 +1,30 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PostRepository } from './post.repository';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { PostMapper } from './post.mapper';
-import { isValidObjectId } from 'mongoose';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
-import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
-import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
+import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
+import { UserDocument } from '../user/schema/user.schema';
+import { PostDocument } from './schemas/post.schema';
+import { CommentDocument } from '../comment/schemas/comment.schema';
+import { MinioService } from '../minio/minio.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly postMapper: PostMapper,
+    private readonly minioService: MinioService,
   ) {}
 
-  getAllPosts = () => {
-    return this.postRepository.getAllPosts();
+  getAllPosts = async (page?: number, limit?: number) => {
+    const posts = await this.postRepository.getAllPostsWithLikes(page, limit);
+    return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 
   getAllPostByUser = async (author: string) => {
@@ -26,101 +35,48 @@ export class PostService {
   };
 
   createPost = async (createPostDto: CreatePostDto) => {
-    if (
-      (createPostDto.author.length &&
-        createPostDto.text.length &&
-        createPostDto.category.length &&
-        createPostDto.title.length) < 1
-    ) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (createPostDto.image) {
+      await this.minioService.sendImage(createPostDto.image);
     }
     const post = await this.postRepository.createPost(createPostDto);
     return this.postMapper.fromDbToPost(post);
   };
 
-  getPostById = async (id: string) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const post = await this.postRepository.getPostById(id);
-    return this.postMapper.fromDbToPost(post);
+  getPostById = (post: PostDocument) => {
+    return this.postRepository.getPostByIdWithLikes(post._id);
   };
 
-  deletePostById = (id: string) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.postRepository.deletePostById(id);
+  deletePostById = (post: PostDocument, user: UserDocument) => {
+    if (user._id.toString() !== post.userId.toString())
+      throw new UnauthorizedException('You can only delete your post');
+    return this.postRepository.deletePostById(post);
   };
 
   updatePostById = (
-    id: string,
-    author: string,
+    post: PostDocument,
+    user: UserDocument,
     updatePostDto: UpdatePostDto,
   ) => {
-    if (!isValidObjectId(id)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (!updatePostDto || Object.keys(updatePostDto).length === 0) {
-      throw new HttpException(
-        'Fill at least one field',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.postRepository.updatePostById(id, updatePostDto);
+    if (user._id.toString() !== post.userId.toString())
+      throw new UnauthorizedException('You can only update your post');
+    return this.postRepository.updatePostById(post, updatePostDto);
   };
 
-  createComment = (idPost: string, createCommentDto: CreateCommentDto) => {
-    if (!isValidObjectId(idPost)) {
-      throw new HttpException(
-        'Wrong id article format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (
-      (createCommentDto.comment.length || createCommentDto.author.length) < 1
-    ) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.postRepository.createComment(idPost, createCommentDto);
+  createComment = (post: PostDocument, createCommentDto: CreateCommentDto) => {
+    return this.postRepository.updatePostWithNewComment(post, createCommentDto);
   };
 
-  updateComment = (
-    idPost: string,
-    idComment: string,
-    updateCommentDto: UpdateCommentDto,
+  updateLikeOnPost = async (post: PostDocument, user: UserDocument) => {
+    const postUpdated = await this.postRepository.updateLikeOnPost(post, user);
+    return this.postMapper.fromDbToPost(postUpdated);
+  };
+
+  updateLikeOnComment = async (
+    post: PostDocument,
+    comment: CommentDocument,
+    user: UserDocument,
   ) => {
-    if (!isValidObjectId(idPost) || !isValidObjectId(idPost)) {
-      throw new HttpException(
-        'Wrong id article or comment format',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (updateCommentDto.comment.length < 1) {
-      throw new HttpException(
-        'At least 1 field is empty',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    return this.postRepository.updateComment(
-      idPost,
-      idComment,
-      updateCommentDto,
-    );
+    await this.postRepository.updateLikeOnComment(comment, user);
+    return this.postRepository.getPostByIdWithLikes(post._id);
   };
 }
