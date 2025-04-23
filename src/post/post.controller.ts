@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseArrayPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -20,6 +21,8 @@ import { CommentByIdPipe } from './_utils/comment-by-id.pipe';
 import { CommentDocument } from '../comment/schemas/comment.schema';
 import { FormDataRequest } from 'nestjs-form-data';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { LangKey } from 'google-translate-api-browser/dest/types/LangKey';
+import { LanguagePipe } from './_utils/language.pipe';
 
 @Controller('post')
 @ApiTags('Post')
@@ -37,7 +40,7 @@ export class PostController {
 
   @Get('/author')
   @ApiOperation({ summary: 'Get all posts by author' })
-  getPostByAuthor(@Query('author') author: string) {
+  getPostByAuthor(@Query('author', ParseArrayPipe) author: string) {
     return this.postService.getAllPostByUser(author);
   }
 
@@ -60,8 +63,11 @@ export class PostController {
 
   @Get('/:postId')
   @ApiOperation({ summary: 'Get post by ID' })
-  getPostById(@Param('postId', PostByIdPipe) post: PostDocument) {
-    return this.postService.getPostById(post);
+  getPostById(
+    @Param('postId', PostByIdPipe) post: PostDocument,
+    @Query('language', LanguagePipe) language: LangKey,
+  ) {
+    return this.postService.getPostById(post, language);
   }
 
   @Delete('/:postId/:userId')

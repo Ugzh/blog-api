@@ -15,9 +15,6 @@ import { PostWithLikeInterface } from './_utils/interfaces/post-with-like.interf
 
 @Injectable()
 export class PostRepository {
-  private readonly USER_NOT_FOUND_EXCEPTION = new NotFoundException(
-    'User not found',
-  );
   private readonly POST_NOT_FOUND_EXCEPTION = new NotFoundException(
     'Post not found',
   );
@@ -123,7 +120,7 @@ export class PostRepository {
     ]);
   };
 
-  getAllPostsByAuhtorWithLikes = async (
+  getAllPostsByAuthorWithLikes = async (
     author: string,
   ): Promise<Aggregate<Array<PostDocument>>> => {
     return this.postModel.aggregate([
@@ -213,15 +210,6 @@ export class PostRepository {
         },
       },
     ]);
-  };
-
-  getAllPostByUser = async (author: string) => {
-    return this.postModel
-      .find({ author })
-      .populate('comments', 'comment')
-      .populate('userId', 'username')
-      .orFail(this.USER_NOT_FOUND_EXCEPTION)
-      .exec();
   };
 
   getPostById = async (idPost: string) => {
@@ -317,6 +305,7 @@ export class PostRepository {
           allLikes: 0,
           'user.password': 0,
           'user.email': 0,
+          userId: 0,
         },
       },
     ]);

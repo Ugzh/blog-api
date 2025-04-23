@@ -13,6 +13,8 @@ import { UserDocument } from '../user/schema/user.schema';
 import { PostDocument } from './schemas/post.schema';
 import { CommentDocument } from '../comment/schemas/comment.schema';
 import { MinioService } from '../minio/minio.service';
+import { translatePost } from './_utils/translate-post';
+import { LangKey } from 'google-translate-api-browser/dest/types/LangKey';
 
 @Injectable()
 export class PostService {
@@ -31,7 +33,7 @@ export class PostService {
     if (!author)
       throw new HttpException("Author's missing", HttpStatus.BAD_REQUEST);
     const posts =
-      await this.postRepository.getAllPostsByAuhtorWithLikes(author);
+      await this.postRepository.getAllPostsByAuthorWithLikes(author);
     return posts.map((post) => this.postMapper.fromDbToPost(post));
   };
 
@@ -43,8 +45,13 @@ export class PostService {
     return this.postMapper.fromDbToPost(post);
   };
 
-  getPostById = (post: PostDocument) => {
-    return this.postRepository.getPostByIdWithLikes(post._id);
+  getPostById = async (post: PostDocument, language?: LangKey) => {
+    const { content, title } = await translatePost(post, language);
+    return {
+      ...(await this.postRepository.getPostByIdWithLikes(post._id)),
+      content,
+      title,
+    };
   };
 
   deletePostById = (post: PostDocument, user: UserDocument) => {
