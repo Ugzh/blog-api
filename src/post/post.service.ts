@@ -25,8 +25,14 @@ export class PostService {
   ) {}
 
   getAllPosts = async (page?: number, limit?: number) => {
-    const posts = await this.postRepository.getAllPostsWithLikes(page, limit);
-    return posts.map((post) => this.postMapper.fromDbToPost(post));
+    const { posts, metadata } = await this.postRepository.getAllPostsWithLikes(
+      page,
+      limit,
+    );
+    return {
+      metadata,
+      posts: posts.map((post) => this.postMapper.fromDbToPost(post)),
+    };
   };
 
   getAllPostByUser = async (author: string) => {

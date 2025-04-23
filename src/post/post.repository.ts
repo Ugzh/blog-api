@@ -28,11 +28,9 @@ export class PostRepository {
     private readonly likeService: LikeService,
   ) {}
 
-  getAllPostsWithLikes = async (
-    page: number = 1,
-    limit: number = 50,
-  ): Promise<Aggregate<Array<PostWithLikeInterface>>> => {
-    return this.postModel.aggregate([
+  getAllPostsWithLikes = async (page: number = 1, limit: number = 50) => {
+    const numOfPosts = await this.postModel.find().exec();
+    const posts = await this.postModel.aggregate([
       {
         $lookup: {
           from: 'users',
@@ -118,6 +116,10 @@ export class PostRepository {
       { $skip: (page - 1) * limit },
       { $limit: limit },
     ]);
+    return {
+      posts,
+      metadata: { page, limit, totalElement: numOfPosts.length - 1 },
+    };
   };
 
   getAllPostsByAuthorWithLikes = async (
