@@ -1,6 +1,7 @@
 import { translate } from 'google-translate-api-browser';
 import { PostWithLikeInterface } from './interfaces/post-with-like.interface';
 import { LangKey } from 'google-translate-api-browser/dest/types/LangKey';
+import { translateComment } from '../../comment/_utils/translate-comment';
 
 export const translatePost = async (
   post: PostWithLikeInterface,
@@ -14,5 +15,8 @@ export const translatePost = async (
     from: 'auto',
     to: language,
   });
-  return { content: content.text, title: title.text };
+  post.text = content.text;
+  post.title = title.text;
+  await translateComment(post.comments, language);
+  return post;
 };

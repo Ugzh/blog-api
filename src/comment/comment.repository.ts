@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 import { Model, Types } from 'mongoose';
-import { PostDocument } from '../post/schemas/post.schema';
 import { CreateCommentDto } from './_utils/dtos/create-comment.dto';
 import { UserRepository } from '../user/user.repository';
 import { UpdateCommentDto } from './_utils/dtos/update-comment.dto';
@@ -22,14 +21,10 @@ export class CommentRepository {
     private readonly userRepository: UserRepository,
   ) {}
 
-  createComment = async (
-    post: PostDocument,
-    createCommentDto: CreateCommentDto,
-  ) => {
+  createComment = async (createCommentDto: CreateCommentDto) => {
     const user = await this.userRepository.findUserByUsername(
       createCommentDto.author,
     );
-
     return this.commentModel.create({
       author: createCommentDto.author,
       comment: createCommentDto.comment,

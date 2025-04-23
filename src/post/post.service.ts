@@ -41,17 +41,16 @@ export class PostService {
     if (createPostDto.image) {
       await this.minioService.sendImage(createPostDto.image);
     }
-    const post = await this.postRepository.createPost(createPostDto);
-    return this.postMapper.fromDbToPost(post);
+    return this.postRepository.createPost(createPostDto);
   };
 
   getPostById = async (post: PostDocument, language?: LangKey) => {
-    const { content, title } = await translatePost(post, language);
-    return {
-      ...(await this.postRepository.getPostByIdWithLikes(post._id)),
-      content,
-      title,
-    };
+    const postWithLikes = await this.postRepository.getPostByIdWithLikes(
+      post._id,
+    );
+    return language !== 'fr'
+      ? await translatePost(postWithLikes, language)
+      : postWithLikes;
   };
 
   deletePostById = (post: PostDocument, user: UserDocument) => {

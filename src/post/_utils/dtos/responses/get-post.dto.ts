@@ -1,5 +1,5 @@
-import { Types } from 'mongoose';
 import { UserDocument } from '../../../../user/schema/user.schema';
+import { CommentWithLikeInterface } from '../../../../comment/_utils/interfaces/comment-with-like.interface';
 
 export class GetPostDto {
   id: string;
@@ -9,7 +9,7 @@ export class GetPostDto {
   user?: UserDocument;
   nbLikes?: number;
   category: string[];
-  comments: Types.ObjectId[];
+  comments: CommentWithLikeInterface[];
   image_url: string | null;
   timeToRead: number;
 }

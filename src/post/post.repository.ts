@@ -31,7 +31,7 @@ export class PostRepository {
   getAllPostsWithLikes = async (
     page: number = 1,
     limit: number = 50,
-  ): Promise<Aggregate<Array<PostDocument>>> => {
+  ): Promise<Aggregate<Array<PostWithLikeInterface>>> => {
     return this.postModel.aggregate([
       {
         $lookup: {
@@ -122,7 +122,7 @@ export class PostRepository {
 
   getAllPostsByAuthorWithLikes = async (
     author: string,
-  ): Promise<Aggregate<Array<PostDocument>>> => {
+  ): Promise<Aggregate<Array<PostWithLikeInterface>>> => {
     return this.postModel.aggregate([
       {
         $match: { author },
@@ -335,7 +335,7 @@ export class PostRepository {
       .deleteOne({ _id: post._id })
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
-    if (postDelete.deletedCount > 0) {
+    if (postDelete.deletedCount > 0 && post.comments.length > 1) {
       await this.commentRepository.deleteManyComments(post.comments);
     }
     return postDelete.deletedCount;
@@ -352,16 +352,15 @@ export class PostRepository {
     post: PostDocument,
     createCommentDto: CreateCommentDto,
   ) {
-    const comment = await this.commentRepository.createComment(
-      post,
-      createCommentDto,
-    );
+    const comment =
+      await this.commentRepository.createComment(createCommentDto);
     return this.postModel
       .findOneAndUpdate(
         { _id: post._id },
         { $push: { comments: comment._id } },
         { new: true },
       )
+      .populate('comments')
       .orFail(this.POST_NOT_FOUND_EXCEPTION)
       .exec();
   }
