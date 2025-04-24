@@ -6,6 +6,7 @@ import {
   Param,
   ParseArrayPipe,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { PostService } from './post.service';
 import { CreatePostDto } from './_utils/dtos/create-post.dto';
 import { UpdatePostDto } from './_utils/dtos/update-post.dto';
 import { CreateCommentDto } from '../comment/_utils/dtos/create-comment.dto';
-import { UserByIdPipe } from '../user/_utils/user-by-id.pipe';
 import { UserDocument } from '../user/schema/user.schema';
 import { PostByIdPipe } from './_utils/post-by-id.pipe';
 import { PostDocument } from './schemas/post.schema';
@@ -23,12 +23,16 @@ import { FormDataRequest } from 'nestjs-form-data';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { LangKey } from 'google-translate-api-browser/dest/types/LangKey';
 import { LanguagePipe } from './_utils/language.pipe';
+import { ConnectedUser } from '../user/_utils/decorator/connected-user.decorator';
+import { Protect } from '../auth/_utils/decorator/protect.decorator';
+import { UserRoleEnum } from '../user/_utils/user-role.enum';
 
 @Controller('post')
 @ApiTags('Post')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
+  @Protect(UserRoleEnum.READER)
   @Get()
   @ApiOperation({ summary: 'Get all posts with pagination' })
   getPostsPagination(
@@ -70,40 +74,44 @@ export class PostController {
     return this.postService.getPostById(post, language);
   }
 
+  @Protect(UserRoleEnum.READER)
   @Delete('/:postId/:userId')
   @ApiOperation({ summary: 'Delete post' })
   deletePostById(
     @Param('postId', PostByIdPipe) post: PostDocument,
-    @Param('userId', UserByIdPipe) user: UserDocument,
+    @ConnectedUser() user: UserDocument,
   ) {
     return this.postService.deletePostById(post, user);
   }
 
-  @Post('/:postId/:userId')
+  @Protect(UserRoleEnum.READER)
+  @Post('/:postId')
   @ApiOperation({ summary: 'Update post by ID' })
   updatePostById(
     @Param('postId', PostByIdPipe) post: PostDocument,
-    @Param('userId', UserByIdPipe) user: UserDocument,
+    @ConnectedUser() user: UserDocument,
     @Body() updatePostDto: UpdatePostDto,
   ) {
     return this.postService.updatePostById(post, user, updatePostDto);
   }
 
-  @Post('/like-post/:postId/:userId')
+  @Protect(UserRoleEnum.READER)
+  @Patch('/:postId')
   @ApiOperation({ summary: 'Like post by Id' })
   updatedLikeOnPost(
     @Param('postId', PostByIdPipe) post: PostDocument,
-    @Param('userId', UserByIdPipe) user: UserDocument,
+    @ConnectedUser() user: UserDocument,
   ) {
     return this.postService.updateLikeOnPost(post, user);
   }
 
-  @Post('/like-comment/:postId/:commentId/:userId')
+  @Protect(UserRoleEnum.READER)
+  @Patch('/:postId/:commentId/')
   @ApiOperation({ summary: 'Like post by Id' })
   updatedLikeOnComment(
     @Param('postId', PostByIdPipe) post: PostDocument,
     @Param('commentId', CommentByIdPipe) comment: CommentDocument,
-    @Param('userId', UserByIdPipe) user: UserDocument,
+    @ConnectedUser() user: UserDocument,
   ) {
     return this.postService.updateLikeOnComment(post, comment, user);
   }

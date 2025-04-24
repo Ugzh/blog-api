@@ -118,7 +118,7 @@ export class PostRepository {
     ]);
     return {
       posts,
-      metadata: { page, limit, totalElement: numOfPosts.length - 1 },
+      metadata: { page, limit, totalElement: numOfPosts.length },
     };
   };
 

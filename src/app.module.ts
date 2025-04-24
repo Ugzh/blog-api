@@ -8,10 +8,14 @@ import { CommentModule } from './comment/comment.module';
 import { NodemailerModule } from './nodemailer/nodemailer.module';
 import { MinioModule } from './minio/minio.module';
 import { LikeModule } from './like/like.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/blog'),
+    ConfigModule.forRoot(),
+    MongooseModule.forRoot(
+      `mongodb://${process.env.MONGO_CONFIG_USERNAME}:${process.env.MONGO_CONFIG_PASSWORD}@mongo:27017/${process.env.MONGO_DB}?authSource=admin`,
+    ),
     PostModule,
     AuthModule,
     UserModule,

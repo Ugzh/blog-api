@@ -8,16 +8,16 @@ export class MinioService {
 
   constructor() {
     this.minioClient = new Minio.Client({
-      endPoint: 'localhost',
+      endPoint: process.env.MINIO_ENDPOINT!,
       port: 9000,
       useSSL: false,
-      accessKey: 'u17G6tgyyOK1RKc3IWeA',
-      secretKey: '1oB4IG6bChiw6qW9M6TrkCy82iw9haK1l3fQadDm',
+      accessKey: process.env.MINIO_ACCESS_KEY,
+      secretKey: process.env.MINIO_SECRET_KEY,
     });
   }
 
   async getUrlImage(objectName: MemoryStoredFile) {
-    return this.minioClient.presignedUrl(
+    const url = await this.minioClient.presignedUrl(
       'GET',
       'images',
       objectName.originalName,
@@ -26,6 +26,7 @@ export class MinioService {
         'response-content-type': objectName.mimeType,
       },
     );
+    return url.replace('minio:9000', 'minio.local');
   }
 
   async sendImage(object: MemoryStoredFile) {
